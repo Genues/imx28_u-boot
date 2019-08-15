@@ -1,0 +1,15 @@
+if TARGET_TIONPRO28
+
+config SYS_BOARD
+	default "tionpro28"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_SOC
+	default "mxs"
+
+config SYS_CONFIG_NAME
+	default "tionpro28"
+
+endif

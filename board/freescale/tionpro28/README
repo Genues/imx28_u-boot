@@ -1,0 +1,32 @@
+Zao Zeo Tion-Pro28
+==================
+
+Supported hardware: MX28EVK rev C and D are supported in U-Boot.
+
+Files of the MX28EVK port
+--------------------------
+
+arch/arm/cpu/arm926ejs/mxs/	- The CPU support code for the Freescale i.MX28
+arch/arm/include/asm/arch-mxs/	- Header files for the Freescale i.MX28
+board/freescale/tionpro28/	- Tion-Pro28 board specific files
+include/configs/tionpro28.h	- Tion-Pro28 configuration file
+
+
+Environment Storage
+-------------------
+
+There are three targets for mx28evk:
+
+"make mx28evk_config"		- store environment variables into MMC
+
+or
+
+"make mx28evk_nand_config"	- store environment variables into NAND flash
+
+or
+
+"make mx28evk_spi_config"       - store environment variables into SPI NOR flash
+
+Choose the target accordingly.
+
+

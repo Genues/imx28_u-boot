@@ -232,8 +232,8 @@ int cpu_eth_init(bd_t *bis)
 
 __weak void mx28_adjust_mac(int dev_id, unsigned char *mac)
 {
-	mac[0] = 0x00;
-	mac[1] = 0x04; /* Use FSL vendor MAC address by default */
+	//mac[0] = 0x00;
+	//mac[1] = 0x04; /* Use FSL vendor MAC address by default */
 
 	if (dev_id == 1) /* Let MAC1 be MAC0 + 1 by default */
 		mac[5] += 1;
@@ -246,7 +246,7 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 {
 	struct mxs_ocotp_regs *ocotp_regs =
 		(struct mxs_ocotp_regs *)MXS_OCOTP_BASE;
-	uint32_t data;
+	uint32_t data[2];
 
 	memset(mac, 0, 6);
 
@@ -258,12 +258,19 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 		return;
 	}
 
-	data = readl(&ocotp_regs->hw_ocotp_cust0);
+	data[0] = readl(&ocotp_regs->hw_ocotp_cust0);
+	data[1] = readl(&ocotp_regs->hw_ocotp_cust1);
 
-	mac[2] = (data >> 24) & 0xff;
+	/*mac[2] = (data >> 24) & 0xff;
 	mac[3] = (data >> 16) & 0xff;
 	mac[4] = (data >> 8) & 0xff;
-	mac[5] = data & 0xff;
+	mac[5] = data & 0xff;*/
+	mac[0] = (data[0] >> 24) & 0xFF;
+	mac[1] = (data[0] >> 16) & 0xFF;
+	mac[2] = (data[0] >> 8) & 0xFF;
+	mac[3] = (data[0] >> 0) & 0xFF;
+	mac[4] = (data[1] >> 8) & 0xFF;
+	mac[5] = (data[1] >> 0) & 0xFF ;
 	mx28_adjust_mac(dev_id, mac);
 }
 #else

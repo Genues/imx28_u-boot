@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Freescale MX28EVK IOMUX setup
+ * Zaozeo TionPro28 IOMUX setup
  *
  * Copyright (C) 2011 Marek Vasut <marek.vasut@gmail.com>
  * on behalf of DENX Software Engineering GmbH
@@ -183,6 +183,9 @@ const iomux_cfg_t iomux_setup[] = {
 	MX28_PAD_LCD_CS__LCD_ENABLE | MUX_CONFIG_LCD,
 	//MX28_PAD_LCD_RESET__GPIO_3_30 | MUX_CONFIG_LCD, /* LCD power */
 	MX28_PAD_PWM3__GPIO_3_28 | MUX_CONFIG_LCD, /* LCD contrast */
+	
+	/*Port1*/
+	MX28_PAD_SSP1_DATA0__GPIO_2_14 | (MXS_PAD_3V3 | MXS_PAD_4MA | MXS_PAD_PULLUP),
 };
 
 #define HW_DRAM_CTL29	(0x74 >> 2)

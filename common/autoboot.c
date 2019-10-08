@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2000
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -13,6 +14,13 @@
 #include <menu.h>
 #include <post.h>
 #include <u-boot/sha256.h>
+
+#define	is_boot_from_usb(void) (!(readl(/*USB_PHY0_BASE_ADDR*/0x8007C000) & (1<<20)))
+#define	disconnect_from_pc(void) writel(0x0, /*OTG_BASE_ADDR + 0x140*/0x80080140)
+
+#ifdef is_boot_from_usb
+#include <environment.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -56,7 +64,7 @@ static int passwd_abort(uint64_t etime)
 	const char *algo_name = "sha256";
 	u_int presskey_len = 0;
 	int abort = 0;
-	int size = sizeof(sha);
+	int size;
 	int ret;
 
 	if (sha_env_str == NULL)
@@ -277,12 +285,12 @@ static void process_fdt_options(const void *blob)
 	/* Add an env variable to point to a kernel payload, if available */
 	addr = fdtdec_get_config_int(gd->fdt_blob, "kernel-offset", 0);
 	if (addr)
-		env_set_addr("kernaddr", (void *)(CONFIG_SYS_TEXT_BASE + addr));
+		setenv_addr("kernaddr", (void *)(CONFIG_SYS_TEXT_BASE + addr));
 
 	/* Add an env variable to point to a root disk, if available */
 	addr = fdtdec_get_config_int(gd->fdt_blob, "rootdisk-offset", 0);
 	if (addr)
-		env_set_addr("rootaddr", (void *)(CONFIG_SYS_TEXT_BASE + addr));
+		setenv_addr("rootaddr", (void *)(CONFIG_SYS_TEXT_BASE + addr));
 #endif /* CONFIG_OF_CONTROL && CONFIG_SYS_TEXT_BASE */
 }
 
@@ -299,12 +307,27 @@ const char *bootdelay_process(void)
 	bootcount = bootcount_load();
 	bootcount++;
 	bootcount_store(bootcount);
-	env_set_ulong("bootcount", bootcount);
+	setenv_ulong("bootcount", bootcount);
 	bootlimit = env_get_ulong("bootlimit", 10, 0);
 #endif /* CONFIG_BOOTCOUNT_LIMIT */
 
 	s = env_get("bootdelay");
 	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
+
+
+#if !defined(CONFIG_FSL_FASTBOOT) && defined(is_boot_from_usb)
+	if (is_boot_from_usb()) {
+		disconnect_from_pc();
+		printf("Boot from USB for mfgtools\n");
+		bootdelay = 0;
+		set_default_env("Use default environment for \
+				 mfgtools\n");
+	} else {
+		printf("Not USB boot\n");
+	}
+#else 
+	printf("Normal Boot\n");
+#endif
 
 #ifdef CONFIG_OF_CONTROL
 	bootdelay = fdtdec_get_config_int(gd->fdt_blob, "bootdelay",
@@ -331,6 +354,13 @@ const char *bootdelay_process(void)
 	} else
 #endif /* CONFIG_BOOTCOUNT_LIMIT */
 		s = env_get("bootcmd");
+
+#if !defined(CONFIG_FSL_FASTBOOT) && defined(is_boot_from_usb)
+	if (is_boot_from_usb()) {
+		s = env_get("bootcmd_mfg");
+		printf("Run bootcmd_mfg: %s\n", s);
+	}
+#endif
 
 	process_fdt_options(gd->fdt_blob);
 	stored_bootdelay = bootdelay;

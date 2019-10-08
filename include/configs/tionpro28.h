@@ -38,7 +38,7 @@
 #define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
 #define CONFIG_ENV_SECT_SIZE		(128 * 1024)
 #define CONFIG_ENV_RANGE		(512 * 1024)
-#define CONFIG_ENV_OFFSET		0x300000
+#define CONFIG_ENV_OFFSET		0x100000
 #define CONFIG_ENV_OFFSET_REDUND	\
 		(CONFIG_ENV_OFFSET + CONFIG_ENV_RANGE)
 #endif
@@ -110,8 +110,22 @@
 #define CONFIG_LOADADDR		0x42000000
 #define CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR
 
+#define CONFIG_MFG_ENV_SETTINGS \
+	/*"mfgtool_args=setenv bootargs console=${console_mainline},${baudrate} " \
+		"rdinit=/linuxrc " \
+		"g_mass_storage.stall=0 g_mass_storage.removable=1 " \
+		"g_mass_storage.file=/fat g_mass_storage.ro=1 " \
+		"g_mass_storage.idVendor=0x066F g_mass_storage.idProduct=0x37FF "\
+		"g_mass_storage.iSerialNumber=\"\" "\
+		"mem=64M root=/dev/ram0 rw rootfstype=ramfs initrd=0x43000000,16M "\
+		"\0" \
+	"initrd_addr=0x43000000\0" \
+	"initrd_high=0xffffffff\0" \
+	"bootcmd_mfg=run mfgtool_args;bootz ${loadaddr} ${initrd_addr}:0xfffffff ${fdt_addr}\0" \*/
+
 /* Extra Environment */
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_MFG_ENV_SETTINGS \
 	"ubifs_file=filesystem.ubifs\0" \
 	"update_nand_full_filename=u-boot.nand\0" \
 	"update_nand_firmware_filename=u-boot.sb\0"	\
@@ -179,17 +193,10 @@
 	"nandboot="		/* Boot from NAND */ \
 		"mtdparts default; " \
 		"run nandargs; " \
-		"nand read ${loadaddr} kernel 0x00400000; " \
-		"if test ${boot_fdt} = yes; then " \
-			"nand read ${fdt_addr} fdt 0x00080000; " \
+		"nand read ${loadaddr} kernel 0x00600000; " \
+		"nand read ${fdt_addr} fdt 0x00080000; " \
 			"bootz ${loadaddr} - ${fdt_addr}; " \
-		"else " \
-			"if test ${boot_fdt} = no; then " \
-				"bootz; " \
-			"else " \
-				"echo \"ERROR: Set boot_fdt to yes or no.\"; " \
-			"fi; " \
-		"fi\0" \
+		\
 	"update_sd_firmware_filename=u-boot.sd\0" \
 	"update_sd_firmware="		/* Update the SD firmware partition */ \
 		"if mmc rescan ; then "	\
@@ -205,7 +212,7 @@
 	"console_mainline=ttyAMA0\0" \
 	"fdt_file=imx28-tionpro28.dtb\0" \
 	"fdt_addr=0x41000000\0" \
-	"boot_fdt=try\0" \
+	"boot_fdt=yes\0" \
 	"ip_dyn=yes\0" \
 	"mmcdev=0\0" \
 	"mmcpart=2\0" \
@@ -258,6 +265,10 @@
 			"bootz; " \
 		"fi;\0"
 
+#if defined(CONFIG_ENV_IS_IN_NAND)
+#define CONFIG_BOOTCOMMAND \
+	"run nandboot"
+#else
 #define CONFIG_BOOTCOMMAND \
 	"mmc dev ${mmcdev}; if mmc rescan; then " \
 		"if run loadbootscript; then " \
@@ -269,6 +280,7 @@
 			"fi; " \
 		"fi; " \
 	"else run netboot; fi"
+#endif
 
 /* The rest of the configuration is shared */
 #include <configs/mxs.h>
